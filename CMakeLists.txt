@@ -3,13 +3,15 @@ cmake_policy(SET CMP0135 NEW)
 
 project(conflicts)
 
+include(CTest)
+include(FetchContent)
+
 add_executable(foo foo.c)
 
 # https://github.com/zeromq/libzmq/blob/959a133520dfc80d29e83aa7ef762e1d0327f63b/tests/CMakeLists.txt#L206-L209
 #
 #   add_library(unity STATIC [...])
 #
-include(FetchContent)
 FetchContent_Declare(
   libzmq
   URL https://github.com/zeromq/libzmq/archive/refs/tags/v4.3.4.tar.gz
