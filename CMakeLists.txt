@@ -31,12 +31,23 @@ FetchContent_Declare(
   URL_HASH MD5=921b4bcb401aa604dc632fdb1c8dbdea
 )
 set(ENABLE_CJSON_TEST ON CACHE BOOL "cJSON: Build unit tests" FORCE)
-
 FetchContent_MakeAvailable(cJSON)
 # FAILS cannot create target "unity" because another target with the same name already
 # exists. The existing target is a static library created in source directory
 # "/Users/eulersson/Devel/conflicting-targets/build/_deps/libzmq-src/tests".
 # See documentation for policy CMP0002 for more details.
 configure_file(${cJSON_SOURCE_DIR}/cJSON.h ${CMAKE_BINARY_DIR}/include/cJSON/cJSON.h)
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_BINARY_DIR}/include)
+target_include_directories(foo PUBLIC ${CMAKE_BINARY_DIR}/include)
 target_link_libraries(foo PUBLIC cJSON)
+
+FetchContent_Declare(
+  cmocka
+  URL https://cmocka.org/files/1.1/cmocka-1.1.7.tar.xz
+  URL_HASH MD5=dc23f4870eb7dfa6da065f3056e815b0
+)
+set(WITH_EXAMPLES OFF CACHE BOOL "CMocka: Build examples" FORCE)
+set(UNIT_TESTING ON CACHE BOOL "CMocka: Build unit tests" FORCE)
+FetchContent_MakeAvailable(cmocka)
+add_executable(suite-foo tests/test_foo.c)
+target_link_libraries(suite-foo cmocka::cmocka)
+add_test(test-foo suite-foo)
