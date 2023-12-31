@@ -15,8 +15,8 @@ unit tests along them, I run into this problem where the target (in this case th
 testing library “unity”) is being added twice by the various dependencies you want to
 build tests for (add_library(unity STATIC [...])):
 
-    add_library(unity [...]) in libzmq: https://github.com/zeromq/libzmq/blob/959a133520dfc80d29e83aa7ef762e1d0327f63b/tests/CMakeLists.txt#L206-L209
-    add_library(unity [...]) in cJSON: https://github.com/DaveGamble/cJSON/blob/19ff92da79ee37c81a4cdf1f50a8dd1cbb02e84f/tests/CMakeLists.txt#L2
+- add_library(unity [...]) in libzmq: https://github.com/zeromq/libzmq/blob/959a133520dfc80d29e83aa7ef762e1d0327f63b/tests/CMakeLists.txt#L206-L209
+- add_library(unity [...]) in cJSON: https://github.com/DaveGamble/cJSON/blob/19ff92da79ee37c81a4cdf1f50a8dd1cbb02e84f/tests/CMakeLists.txt#L2
 
 Reproducible exampe: GitHub - eulersson/cmake-fetchcontent-conflicting-targets: Problem illustrating using FetchContent on projects defining the same un-namespaced target.
 
