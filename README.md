@@ -6,8 +6,9 @@ My goal is to be able to compile the project’s tests along with the project’
 tests too. For that I was thinking of building the unit tests when compiling from source
 with FetchContent. If you included `include(CTest)` any subsequent calls to add_test would
 include that test so afterwards all the tests (project + dependencies’) can be run with
-`ctest` on the build dir. Does this make sense? Perhaps there’s another way that
-conforms to best practices?
+`ctest` on on the build dir (`ctest --test-dir build`):
+
+Does this make sense? Perhaps there’s another way that conform to best practices?
 
 When adding various dependencies into a CMake project, if you want to also build the
 unit tests along them, I run into this problem where the target (in this case the unit
