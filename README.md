@@ -8,6 +8,22 @@ with FetchContent. If you included `include(CTest)` any subsequent calls to add_
 include that test so afterwards all the tests (project + dependencies’) can be run with
 `ctest` on on the build dir (`ctest --test-dir build`):
 
+```
+$ ctest --test-dir build
+Internal ctest changing into directory: /home/eulersson/cmake-fetchcontent-conflicting-targets/build
+Test project /home/eulersson/cmake-fetchcontent-conflicting-targets/build
+(FIRST IT RUNS THE TESTS FROM THIS PROJECT (TEST_FOO))
+      Start  1: test-foo
+ 1/62 Test  #1: test-foo ..........................   Passed    0.02 sec
+ (NOW IT WOULD RUN THE TESTS FROM CJSON (DEPENDENCY))
+      Start  2: cJSON_test
+ 2/62 Test  #2: cJSON_test ........................   Passed    0.02 sec
+      Start  3: parse_examples
+[...]
+ (NOW IT WOULD RUN THE TESTS FROM LIBZMQ (DEPENDENCY))
+[...]
+```
+
 Does this make sense? Perhaps there’s another way that conform to best practices?
 
 When adding various dependencies into a CMake project, if you want to also build the
