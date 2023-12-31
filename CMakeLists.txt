@@ -38,7 +38,7 @@ FetchContent_MakeAvailable(cJSON)
 # See documentation for policy CMP0002 for more details.
 configure_file(${cJSON_SOURCE_DIR}/cJSON.h ${CMAKE_BINARY_DIR}/include/cJSON/cJSON.h)
 target_include_directories(foo PUBLIC ${CMAKE_BINARY_DIR}/include)
-target_link_libraries(foo PUBLIC cJSON)
+target_link_libraries(foo PUBLIC cjson)
 
 FetchContent_Declare(
   cmocka
