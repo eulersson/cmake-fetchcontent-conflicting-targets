@@ -19,6 +19,7 @@ build tests for (add_library(unity STATIC [...])):
 
 Reproducible exampe: GitHub - eulersson/cmake-fetchcontent-conflicting-targets: Problem illustrating using FetchContent on projects defining the same un-namespaced target.
 
+```
 $ git clone https://github.com/eulersson/cmake-conflicting-targets
 $ cd cmake-conflicting-targets
 $ cmake -S . -B build
@@ -29,6 +30,7 @@ CMake Error at build/_deps/cjson-src/tests/CMakeLists.txt:2 (add_library):
   in source directory
   "/Users/ramon/Devel/conflicting-targets/build/_deps/libzmq-src/tests".  See
   documentation for policy CMP0002 for more details.
+```
 
 This would not be an issue if those targets were namespaced.
 
