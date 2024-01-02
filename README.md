@@ -1,5 +1,7 @@
 # CMake FetchContent Conflicting Targets
 
+**A possible workaround is found on branch `workaround` https://github.com/eulersson/cmake-fetchcontent-conflicting-targets/tree/workaround**.
+
 Hello, I have problems building a project with two external dependencies that define the same target.
 
 My goal is to be able to compile the project’s tests along with the project’s dependencies
