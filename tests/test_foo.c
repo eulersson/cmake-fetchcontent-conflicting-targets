@@ -2,6 +2,7 @@
 #include <setjmp.h>
 #include <stddef.h>
 #include <cmocka.h>
+#include <cjson/cJSON.h>
 
 static void test(void **state)
 {
@@ -10,6 +11,7 @@ static void test(void **state)
 
 int main()
 {
+    cJSON *json = cJSON_Parse("{\"key1\":\"val1\"}");
     const struct CMUnitTest tests[] =
     {
         cmocka_unit_test(test),

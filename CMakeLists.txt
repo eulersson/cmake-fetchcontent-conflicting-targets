@@ -1,53 +1,92 @@
 cmake_minimum_required(VERSION 3.10)
 cmake_policy(SET CMP0135 NEW)
 
-project(conflicts)
+project(conflicts C)
+
+include(ExternalProject)
 
 include(CTest)
-include(FetchContent)
+enable_testing()
 
-add_executable(foo foo.c)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# https://github.com/zeromq/libzmq/blob/959a133520dfc80d29e83aa7ef762e1d0327f63b/tests/CMakeLists.txt#L206-L209
-#
-#   add_library(unity STATIC [...])
-#
-FetchContent_Declare(
-  libzmq
-  URL https://github.com/zeromq/libzmq/archive/refs/tags/v4.3.4.tar.gz
-  URL_HASH MD5=cc20b769ac10afa352e5ed2769bb23b3
+ExternalProject_Add(
+  zmq
+  URL https://github.com/zeromq/libzmq/archive/refs/tags/v4.3.5.tar.gz
+  URL_HASH MD5=cfb80c6ad694cacc2f7c99bf44e8b686
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}/zmq
+  CMAKE_CACHE_ARGS -DBUILD_TESTS:BOOL=FALSE
 )
-set(BUILD_TESTS ON CACHE BOOL "libzmq: Build unit tests" FORCE)
-FetchContent_MakeAvailable(libzmq)
-target_link_libraries(foo PUBLIC libzmq)
+list(APPEND EP_ADDED_${PROJECT_NAME}_DEPENDENCIES zmq)
 
-# https://github.com/DaveGamble/cJSON/blob/19ff92da79ee37c81a4cdf1f50a8dd1cbb02e84f/tests/CMakeLists.txt#L2
-#
-#  add_library(unity STATIC [...])
-#
-FetchContent_Declare(
+ExternalProject_Add(
   cJSON
-  URL https://github.com/DaveGamble/cJSON/archive/refs/tags/v1.7.15.tar.gz
-  URL_HASH MD5=921b4bcb401aa604dc632fdb1c8dbdea
+  URL https://github.com/DaveGamble/cJSON/archive/refs/tags/v1.7.16.tar.gz
+  URL_HASH MD5=9422f73fb9e4e524d77d9467d4b73536
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}/cJSON
+  CMAKE_CACHE_ARGS
+    -DENABLE_CJSON_TEST:BOOL=TRUE
 )
-set(ENABLE_CJSON_TEST ON CACHE BOOL "cJSON: Build unit tests" FORCE)
-FetchContent_MakeAvailable(cJSON)
-# FAILS cannot create target "unity" because another target with the same name already
-# exists. The existing target is a static library created in source directory
-# "/Users/eulersson/Devel/conflicting-targets/build/_deps/libzmq-src/tests".
-# See documentation for policy CMP0002 for more details.
-configure_file(${cJSON_SOURCE_DIR}/cJSON.h ${CMAKE_BINARY_DIR}/include/cJSON/cJSON.h)
-target_include_directories(foo PUBLIC ${CMAKE_BINARY_DIR}/include)
-target_link_libraries(foo PUBLIC cjson)
+list(APPEND EP_ADDED_${PROJECT_NAME}_DEPENDENCIES cJSON)
 
-FetchContent_Declare(
+ExternalProject_Add(
   cmocka
   URL https://cmocka.org/files/1.1/cmocka-1.1.7.tar.xz
   URL_HASH MD5=dc23f4870eb7dfa6da065f3056e815b0
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}/cmocka
+  CMAKE_CACHE_ARGS
+    -DUNIT_TESTING:BOOL=TRUE
 )
-set(WITH_EXAMPLES OFF CACHE BOOL "CMocka: Build examples" FORCE)
-set(UNIT_TESTING ON CACHE BOOL "CMocka: Build unit tests" FORCE)
-FetchContent_MakeAvailable(cmocka)
-add_executable(suite-foo tests/test_foo.c)
-target_link_libraries(suite-foo cmocka::cmocka)
-add_test(test-foo suite-foo)
+list(APPEND EP_ADDED_${PROJECT_NAME}_TEST_DEPENDENCIES cmocka)
+
+add_executable(foo foo.c)
+
+message("EP_ADDED_${PROJECT_NAME}_DEPENDENCIES: ${EP_ADDED_${PROJECT_NAME}_DEPENDENCIES}")
+message("EP_ADDED_${PROJECT_NAME}_TESTING_DEPENDENCIES: ${EP_ADDED_${PROJECT_NAME}_TESTING_DEPENDENCIES}")
+
+# So that if any of the external dependencies change then foo is rebuilt.
+add_dependencies(foo ${EP_ADDED_${PROJECT_NAME}_DEPENDENCIES} ${EP_ADDED_${PROJECT_NAME}_TEST_DEPENDENCIES})
+
+foreach(dep IN LISTS EP_ADDED_${PROJECT_NAME}_DEPENDENCIES EP_ADDED_${PROJECT_NAME}_TEST_DEPENDENCIES)
+  message("[Dependency] [${dep}] Adding includes and libs to interface target ${dep}_lib...")
+  add_library(${dep}_lib INTERFACE)
+  target_include_directories(
+    ${dep}_lib
+    INTERFACE
+    ${CMAKE_BINARY_DIR}/${dep}/include/
+  )
+  target_link_libraries(
+    ${dep}_lib
+    INTERFACE
+    ${CMAKE_BINARY_DIR}/${dep}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}${dep}${CMAKE_SHARED_LIBRARY_SUFFIX}
+  )
+
+  # Link against the interface lib, that way instead of having to run:
+  #
+  #   `target_include_directories(foo ${CMAKE_BINARY_DIR}/${dep}/include/)`
+  #   `target_link_libraries(foo ${CMAKE_BINARY_DIR}/${dep}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}${dep}${CMAKE_SHARED_LIBRARY_SUFFIX})`
+  #
+  # we can simply link to the interface library which has this information (includes and
+  # libs) associated:
+  #
+  #   `target_link_libraries(foo ${dep}_lib)`
+  #
+  # That makes it cleaner when we have to link to these deps on other executables or unit tests.
+  target_link_libraries(foo PRIVATE ${dep}_lib)
+endforeach()
+
+set(
+  ${PROJECT_NAME}_unit_tests
+  test_foo
+)
+foreach(${PROJECT_NAME}_unit_test ${${PROJECT_NAME}_unit_tests})
+  add_executable(${${PROJECT_NAME}_unit_test} tests/${${PROJECT_NAME}_unit_test}.c)
+  target_link_libraries(${${PROJECT_NAME}_unit_test} cJSON_lib cmocka_lib)
+  add_test(${${PROJECT_NAME}_unit_test} ${${PROJECT_NAME}_unit_test})
+endforeach()
+
+# Run tests with:
+# ctest --test-dir build
+# ctest --test-dir build/zmq-prefix/src/zmq-build
+# ctest --test-dir build/cmocka-prefix/src/cmocka-build
+# ctest --test-dir build/cJSON-prefix/src/cJSON-build
